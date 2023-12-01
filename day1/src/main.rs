@@ -17,7 +17,7 @@ fn main() {
             break;
         }
 
-        print!("{} : {bytes} bytes", str.trim());
+        print!("{}", str.trim());
 
         let mut first: i32 = -1;
         let mut last: i32 = -1;
@@ -33,18 +33,22 @@ fn main() {
                 } else {
                     last = c.to_digit(10).unwrap() as i32
                 }
-            }
+            } else {
+                // Try to match this substring to a number string.
+                for (i, s) in strings.iter().enumerate() {
+                    let e: usize = std::cmp::min(s.len(), str.len() - index);
+                    if *s == &str[index..index + e] {
+                        if first < 0 {
+                            first = i as i32;
+                            last = first;
+                        } else {
+                            last = i as i32;
+                        }
 
-            // Try to match this substring to a number string.
-            for (i, s) in strings.iter().enumerate() {
-                let e: usize = std::cmp::min(s.len(), str.len() - index);
-
-                if *s == &str[index..index + e] {
-                    if first < 0 {
-                        first = i as i32;
-                        last = first;
-                    } else {
-                        last = i as i32;
+                        // Skip most of the matched string, keep in mind it will be increased
+                        // again by one before the next iter.
+                        index += s.len() - 2;
+                        break;
                     }
                 }
             }
@@ -53,7 +57,7 @@ fn main() {
             index += 1;
         }
 
-        println!("-> Found: {first}{last}");
+        println!(" |-> Found: {first}{last}");
         sum += 10 * first + last;
     }
 
