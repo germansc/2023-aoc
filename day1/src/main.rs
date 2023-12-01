@@ -17,13 +17,13 @@ fn main() {
             break;
         }
 
-        println!("{bytes}: {}", str.trim());
+        print!("{} : {bytes} bytes", str.trim());
 
         let mut first: i32 = -1;
         let mut last: i32 = -1;
         let mut index: usize = 0;
 
-        while index < str.len() {
+        while index < str.trim().len() {
             // Check if this char is a string.
             let c: char = str.as_bytes()[index] as char;
             if char::is_digit(c, 10) {
@@ -40,7 +40,6 @@ fn main() {
                 let e: usize = std::cmp::min(s.len(), str.len() - index);
 
                 if *s == &str[index..index + e] {
-                    println!("Found a numString");
                     if first < 0 {
                         first = i as i32;
                         last = first;
@@ -54,9 +53,9 @@ fn main() {
             index += 1;
         }
 
-        println!("For this line: {first}{last}");
+        println!("-> Found: {first}{last}");
         sum += 10 * first + last;
     }
 
-    println!("{sum}");
+    println!("\nThe final sum is: \n{sum}");
 }
