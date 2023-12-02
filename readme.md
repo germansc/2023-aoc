@@ -16,7 +16,7 @@ take input from `stdin`, and print the result in `stdout`.
 To compile and run a solution, simply call:
 
 ```bash
-cd day1
+cd day01
 cargo run < input.txt
 ```
 
