@@ -1,6 +1,6 @@
 use std::io;
 
-fn process_game(line: String) -> u32 {
+fn process_game(line: String) -> (u32, u32) {
     // Assuming all lines starts with Game ID: Always present
     let e = line.trim().find(":").unwrap();
     let id: u32 = line[5..e].parse().expect("Could not parse Game ID!");
@@ -48,17 +48,19 @@ fn process_game(line: String) -> u32 {
     }
 
     // Check if the game is possible and return the ID, otherwise, return 0.
+    let power: u32 = red * green * blue;
     if red > 12 || green > 13 || blue > 14 {
-        return 0;
+        return (0, power);
     } else {
-        return id;
+        return (id, power);
     }
 }
 
 fn main() {
     println!("2023 AoC - Day 2");
 
-    let mut sum: u32 = 0;
+    let mut part1: u32 = 0;
+    let mut part2: u32 = 0;
 
     loop {
         let mut str = String::new();
@@ -69,8 +71,11 @@ fn main() {
             break;
         }
 
-        sum += process_game(str);
+        let (id_if_valid, power) = process_game(str);
+        part1 += id_if_valid;
+        part2 += power;
     }
 
-    println!("\nThe final sum is: \n{sum}");
+    println!("\nPart 1: \n{part1}");
+    println!("\nPart 2: \n{part2}");
 }
