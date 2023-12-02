@@ -45,8 +45,13 @@ fn main() {
                             last = i as i32;
                         }
 
-                        // Skip most of the matched string, keep in mind it will be increased
-                        // again by one before the next iter.
+                        // Skip most of the matched string, but not all of it. Some overlap might
+                        // happen between "string numbers", since I want to find the last number, I
+                        // want to consider all of them. Watching at the strings, 1 character
+                        // might overlap on consecutive numbers, so, i will skip len - 2, since
+                        // before the next iteration the index will be increased in one, leaving me
+                        // on the last character of this match (that could be the start of a new
+                        // match).
                         index += s.len() - 2;
                         break;
                     }
