@@ -1,5 +1,6 @@
 use std::io::{self, Read};
 
+// ------------------------------------------------------- PART 1 Functions ---
 struct EnginePart {
     valid: bool,
     number: u32,
@@ -80,6 +81,105 @@ fn analyze_schematic(sch: &Vec<&str>) -> u32 {
     return sum;
 }
 
+// ------------------------------------------------------- PART 2 Functions ---
+struct Gear {
+    valid: bool,
+    ratio: u32,
+}
+
+fn get_part_num(s: &Vec<&str>, x: usize, y: usize) -> u32 {
+    let mut start: isize = x as isize;
+    let mut end = x;
+    let line = s[y];
+
+    while start >= 0 && line.chars().nth(start as usize).unwrap().is_digit(10) {
+        start -= 1;
+    }
+
+    while end < line.len() && line.chars().nth(end).unwrap().is_digit(10) {
+        end += 1;
+    }
+
+    let start = (start + 1) as usize;
+    return line[start..end].parse().expect("Could not parse number");
+}
+
+fn validate_gear(s: &Vec<&str>, x: usize, y: usize) -> Gear {
+    let mut valid: bool = false;
+    let mut parts: Vec<u32> = Vec::new();
+    let mut ratio: u32 = 0;
+
+    let current: &str = s[y];
+    let prev: &str = if y > 0 { s[y - 1] } else { "" };
+    let next: &str = if y < s.len() - 1 { s[y + 1] } else { "" };
+
+    if x != 0 && current.chars().nth(x - 1).unwrap().is_digit(10) {
+        parts.push(get_part_num(s, x - 1, y));
+    }
+
+    if x != 0 && !prev.is_empty() && prev.chars().nth(x - 1).unwrap().is_digit(10) {
+        parts.push(get_part_num(s, x - 1, y - 1));
+    }
+
+    if x != 0 && !next.is_empty() && next.chars().nth(x - 1).unwrap().is_digit(10) {
+        parts.push(get_part_num(s, x - 1, y + 1));
+    }
+
+    if x != current.len() - 1 && current.chars().nth(x + 1).unwrap().is_digit(10) {
+        parts.push(get_part_num(s, x + 1, y));
+    }
+
+    if x != prev.len() - 1 && !prev.is_empty() && prev.chars().nth(x + 1).unwrap().is_digit(10) {
+        parts.push(get_part_num(s, x + 1, y - 1));
+    }
+
+    if x != next.len() - 1 && !next.is_empty() && next.chars().nth(x + 1).unwrap().is_digit(10) {
+        parts.push(get_part_num(s, x + 1, y + 1));
+    }
+
+    if !prev.is_empty() && prev.chars().nth(x).unwrap().is_digit(10) {
+        parts.push(get_part_num(s, x, y - 1));
+    }
+
+    if !next.is_empty() && next.chars().nth(x).unwrap().is_digit(10) {
+        parts.push(get_part_num(s, x, y + 1));
+    }
+
+    // Assuming unique parts numbers, I can remove duplicates from parts to know
+    // how many parts are adjacent to this gear.
+    parts.sort();
+    parts.dedup();
+
+    if parts.len() == 2 {
+        valid = true;
+        ratio = parts[0] * parts[1];
+    }
+
+    return Gear { valid, ratio };
+}
+
+fn analyze_gears(sch: &Vec<&str>) -> u32 {
+    let mut gears: Vec<Gear> = Vec::new();
+
+    for (y, line) in sch.iter().enumerate() {
+        for (x, c) in line.chars().enumerate() {
+            if c == '*' {
+                // Found a gear.
+                gears.push(validate_gear(sch, x, y));
+            }
+        }
+    }
+
+    let mut sum: u32 = 0;
+    for gear in gears {
+        if gear.valid {
+            sum += gear.ratio;
+        }
+    }
+
+    return sum;
+}
+
 fn main() {
     println!("2023 AoC - Day 3");
 
@@ -99,6 +199,8 @@ fn main() {
 
     // Find parts and their validity.
     let part1 = analyze_schematic(&schematic);
+    let part2 = analyze_gears(&schematic);
 
-    println!("\nThe final sum is: \n{part1}");
+    println!("Part 1: \n{part1}");
+    println!("Part 2: \n{part2}");
 }
