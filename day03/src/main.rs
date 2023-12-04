@@ -5,38 +5,84 @@ struct EnginePart {
     number: u32,
 }
 
-fn check_validity(sch: &Vec<&str>, x: u32, y: u32) -> bool {
+fn contains_symbol(string: &str) -> bool {
+    for c in string.chars() {
+        if !"0123456789.".contains(c) {
+            return true;
+        }
+    }
+
     return false;
 }
 
-fn analyze_schematic(sch: &Vec<&str>) {
-    let mut x = 0;
+fn validate_part(sch: &Vec<&str>, x: usize, y: usize, l: usize) -> EnginePart {
+    let mut valid: bool = false;
+    let current: &str = sch[y];
+    let prev: &str = if y > 0 { sch[y - 1] } else { "" };
+    let next: &str = if y < sch.len() - 1 { sch[y + 1] } else { "" };
+    let leftmost: usize = x.saturating_sub(1);
+    let rightmost: usize = std::cmp::min(current.len() - 1, x + l);
 
-    for y in 0..sch.len() {
-        while x < sch[y].len() {
-            let c: char = sch[y].chars().nth(x).unwrap();
-            if c.is_digit(10) {
-                let e: usize = match sch[y][x..].find(|c: char| !c.is_digit(10)) {
-                    Some(num) => num,
-                    None => sch[y].len(),
-                };
-                println!("Found number of len {} at {y},{x}", e - x);
-                x = e;
-                continue;
-            }
+    let part: u32 = current[x..x + l]
+        .parse()
+        .expect("Could not parse part number");
 
-            x += 1;
-        }
-
-        // Next line.
-        x = 0;
+    // Check to the left and right of the number:
+    if contains_symbol(&current[leftmost..=rightmost]) {
+        valid = true;
+    } else if !prev.is_empty() && contains_symbol(&prev[leftmost..=rightmost]) {
+        valid = true;
+    } else if !next.is_empty() && contains_symbol(&next[leftmost..=rightmost]) {
+        valid = true;
     }
+
+    return EnginePart {
+        valid,
+        number: part,
+    };
+}
+
+fn analyze_schematic(sch: &Vec<&str>) -> u32 {
+    let mut parts: Vec<EnginePart> = Vec::new();
+
+    for (y, line) in sch.iter().enumerate() {
+        let mut x: usize = 0;
+        while x < line.len() {
+            if line.chars().nth(x).unwrap().is_digit(10) {
+                let mut e: usize = x + 1;
+                while e < line.len() {
+                    if line.chars().nth(e).unwrap().is_digit(10) {
+                        e += 1
+                    } else {
+                        break;
+                    }
+                }
+
+                // Found digit of length e-x at y,x, validate it:
+                parts.push(validate_part(sch, x, y, e - x));
+
+                // Keep looking
+                x = e + 1;
+            } else {
+                x += 1;
+            }
+        }
+    }
+
+    // Directly return the sum of valid parts numbers.
+    let mut sum: u32 = 0;
+    for part in parts {
+        if part.valid {
+            sum += part.number;
+        }
+    }
+
+    return sum;
 }
 
 fn main() {
     println!("2023 AoC - Day 3");
 
-    let mut part1: i32 = 0;
     let mut schematic: Vec<&str> = Vec::new();
     let mut buff = String::new();
 
@@ -51,7 +97,8 @@ fn main() {
         }
     }
 
-    analyze_schematic(&schematic);
+    // Find parts and their validity.
+    let part1 = analyze_schematic(&schematic);
 
     println!("\nThe final sum is: \n{part1}");
 }
