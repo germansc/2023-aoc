@@ -21,7 +21,7 @@ def validate_part(schem, x, y, l):
         valid = True
     elif (y != len(schem)-1) and symbol_in_string(schem[y+1][max(0,x-1):min(len(schem[y]),x+l+1)]):
         valid = True
-    return (part_num, valid)
+    return (valid, part_num)
 
 def analyze_schem(schem):
     x = 0
@@ -106,8 +106,8 @@ if __name__ == "__main__":
     analyze_schem(schem)
     for part in PARTS:
         # print(part)
-        if part[1] is True:
-            part1 += part[0]
+        if part[0] is True:
+            part1 += part[1]
 
     find_gear(schem)
     for gear in GEARS:
