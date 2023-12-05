@@ -69,32 +69,65 @@ fn convert_ranges(
 
     // Lets get recursive, why not?!
     if source != conv.from {
-        println!("Need {}", conv.from);
         ranges = convert_ranges(convs, ranges, source, &conv.from);
     }
 
-    println!("Converting {} to {}", conv.from, conv.to);
-    dbg!(&ranges);
+    print!(
+        "Converting {} to {} -> {} mappings {} ranges",
+        conv.from,
+        conv.to,
+        conv.mappings.len(),
+        ranges.len()
+    );
+
+    let mut converted: Vec<Range> = vec![];
 
     // For each range, check for mappings interceptions to create new subranges.
     while ranges.len() != 0 {
         let range = ranges.remove(0);
+        let mut mapped = false;
 
         for map in &conv.mappings {
             let map_start = map.src_start;
             let map_end = map_start + map.range;
+            let map_offset = map.dst_start.wrapping_sub(map.src_start) as i64;
 
-            if map_end > range.start && map_start <= range.end {
-                // Found some overlap! -> 4 posible cases:
-                println!(
-                    "Overlap! {} {} {} {}",
-                    map_start, map_end, range.start, range.end
-                );
+            if map_end >= range.start && map_start <= range.end {
+                // Found some overlap! -> Shift the overlapped range:
+                mapped = true;
+                let new_start = std::cmp::max(range.start, map_start) as i64 + map_offset;
+                let new_end = std::cmp::min(range.end, map_end) as i64 + map_offset;
+                converted.push(Range {
+                    start: new_start as u64,
+                    end: new_end as u64,
+                });
+
+                // Make new ranges out of values not mapped.
+                if range.start < map_start {
+                    ranges.push(Range {
+                        start: range.start,
+                        end: map_start - 1,
+                    });
+                }
+                // Make new ranges out of values not mapped.
+                if range.end > map_end {
+                    ranges.push(Range {
+                        start: map_end + 1,
+                        end: range.end,
+                    });
+                }
             }
+        }
+
+        // No mappings for this range... it is converted as is.
+        if !mapped {
+            converted.push(range);
         }
     }
 
-    return vec![];
+    println!(" -> {} resulting ranges", converted.len());
+
+    return converted;
 }
 
 //
@@ -182,7 +215,13 @@ fn main() {
     }
 
     // The tricky thing is that every conversion might output more ranges than went in.
-    dbg!(&inital_ranges);
+    let part2_ranges = convert_ranges(&conversions, inital_ranges.clone(), "seed", "location");
 
-    convert_ranges(&conversions, inital_ranges.clone(), "seed", "location");
+    // Look for the range with the smaller start.
+    let mut part2_min = u64::MAX;
+    for range in part2_ranges {
+        part2_min = std::cmp::min(part2_min, range.start);
+    }
+
+    println!("PART 2: {}", part2_min);
 }
