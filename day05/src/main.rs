@@ -10,11 +10,19 @@ struct Mapping {
 #[derive(Debug)]
 struct Conversion {
     from: String,
-    _to: String,
+    to: String,
     mappings: Vec<Mapping>,
 }
 
-fn convert_to(convs: &Vec<Conversion>, mut values: Vec<u64>, until: String) -> Vec<u64> {
+#[derive(Debug, Clone)]
+struct Range {
+    start: u64,
+    end: u64,
+}
+
+// ------------------------------------------------------- PART 1 FUNCTIONS ---
+//
+fn convert_to(convs: &Vec<Conversion>, mut values: Vec<u64>, until: &str) -> Vec<u64> {
     for conv in convs {
         // Check end of conversion...
         if conv.from == until {
@@ -36,9 +44,64 @@ fn convert_to(convs: &Vec<Conversion>, mut values: Vec<u64>, until: String) -> V
     return values;
 }
 
+// ------------------------------------------------------- PART 2 FUNCTIONS ---
+//
+
+fn convert_ranges(
+    convs: &Vec<Conversion>,
+    mut ranges: Vec<Range>,
+    source: &str,
+    until: &str,
+) -> Vec<Range> {
+    // Nothing to do in this case...
+    if source == until {
+        return ranges;
+    }
+
+    // Search for the requirements of the conversion.
+    let conv = match convs.iter().find(|a| a.to == until) {
+        Some(val) => val,
+        None => {
+            println!("Could not find conversion!");
+            return vec![];
+        }
+    };
+
+    // Lets get recursive, why not?!
+    if source != conv.from {
+        println!("Need {}", conv.from);
+        ranges = convert_ranges(convs, ranges, source, &conv.from);
+    }
+
+    println!("Converting {} to {}", conv.from, conv.to);
+    dbg!(&ranges);
+
+    // For each range, check for mappings interceptions to create new subranges.
+    while ranges.len() != 0 {
+        let range = ranges.remove(0);
+
+        for map in &conv.mappings {
+            let map_start = map.src_start;
+            let map_end = map_start + map.range;
+
+            if map_end > range.start && map_start <= range.end {
+                // Found some overlap! -> 4 posible cases:
+                println!(
+                    "Overlap! {} {} {} {}",
+                    map_start, map_end, range.start, range.end
+                );
+            }
+        }
+    }
+
+    return vec![];
+}
+
+//
 fn main() {
     println!("2023 Aoc - Day 05");
 
+    // --------------------------------------------------- INPUT COLLECTION ---
     // Get seeds from the first line
     let mut line = String::new();
     io::stdin()
@@ -91,7 +154,7 @@ fn main() {
         // Create the new conversion!
         conversions.push(Conversion {
             from: from_to[0].to_string(),
-            _to: from_to[2].to_string(),
+            to: from_to[2].to_string(),
             mappings: maps,
         });
 
@@ -99,9 +162,27 @@ fn main() {
         i += 1;
     }
 
-    // Part 1: Get the smaller location.
-    let mut part1 = convert_to(&conversions, seeds.clone(), "location".to_string());
+    // ------------------------------------------------------------- PART 1 ---
+    //
+    let mut part1 = convert_to(&conversions, seeds.clone(), "location");
     part1.sort();
 
     println!("PART 1: {}", part1[0]);
+
+    // ------------------------------------------------------------- PART 2 ---
+    // Part 2 - May God have mercy on my ranges...
+
+    // Working with every seed is insane, I'll work with ranges instead.
+    let mut inital_ranges: Vec<Range> = vec![];
+    for i in 0..seeds.len() / 2 {
+        let start: u64 = seeds[2 * i];
+        let end: u64 = start + seeds[2 * i + 1];
+
+        inital_ranges.push(Range { start, end });
+    }
+
+    // The tricky thing is that every conversion might output more ranges than went in.
+    dbg!(&inital_ranges);
+
+    convert_ranges(&conversions, inital_ranges.clone(), "seed", "location");
 }
