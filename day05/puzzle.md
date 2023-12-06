@@ -178,11 +178,3 @@ Consider all of the initial seed numbers listed in the ranges on the first line
 of the almanac. What is the lowest location number that corresponds to any of
 the initial seed numbers?
 
-
-Hacerlo punto a punto obviamente es imposible... se podría hacer de a rangos,
-viendo como se transforma cada RANGO, y teniendo en cuenta que la
-transformacion puede generar MAS RANGOS a la salida que a la entrada.
-
-Tambien tener en cuenta recusividad, quizas sea necesaria para resolver las
-transformaciones de atras para adelante.
-
