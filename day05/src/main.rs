@@ -124,6 +124,7 @@ fn convert_ranges(
                     });
                     println!("Remanent range {}-{}", &map_end + 1, &range.end);
                 }
+                break;
             }
         }
 
