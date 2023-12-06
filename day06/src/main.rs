@@ -36,13 +36,38 @@ fn main() {
         .collect();
 
     // ------------------------------------------------------------- PART 1 ---
-    let _winners = get_winning_ranges(&time, &dist);
+    let winners = get_winning_ranges(&time, &dist);
     let mut part1: u64 = 1;
-    for range in _winners {
+    for range in winners {
         part1 *= (range.1 + 1) - range.0;
     }
 
     println!("PART 1: {part1}");
+
+    // ------------------------------------------------------------- PART 2 ---
+    let time: u64 = time
+        .into_iter()
+        .map(|i| i.to_string())
+        .collect::<String>()
+        .parse()
+        .unwrap();
+
+    let dist: u64 = dist
+        .into_iter()
+        .map(|i| i.to_string())
+        .collect::<String>()
+        .parse()
+        .unwrap();
+
+    dbg!(&time);
+    dbg!(&dist);
+    let time = vec![time];
+    let dist = vec![dist];
+
+    let winners = get_winning_ranges(&time, &dist);
+    let part2: u64 = (winners[0].1 + 1) - winners[0].0;
+
+    println!("PART 2: {part2}");
 }
 
 fn get_winning_ranges(time: &Vec<u64>, dist: &Vec<u64>) -> Vec<(u64, u64)> {
