@@ -72,7 +72,7 @@ fn convert_ranges(
         ranges = convert_ranges(convs, ranges, source, &conv.from);
     }
 
-    println!(
+    print!(
         "Converting {} to {} -> {} mappings {} ranges",
         conv.from,
         conv.to,
@@ -102,19 +102,12 @@ fn convert_ranges(
                     end: new_end as u64,
                 });
 
-                println!(
-                    "Range {}-{} mappped with {}-{} [{}]",
-                    range.start, range.end, map_start, map_end, map_offset
-                );
-
                 // Make new ranges out of values not mapped.
                 if range.start < map_start {
                     ranges.push(Range {
                         start: range.start,
                         end: map_start - 1,
                     });
-
-                    println!("Remanent range {}-{}", &range.start, &map_start - 1);
                 }
                 // Make new ranges out of values not mapped.
                 if range.end > map_end {
@@ -122,7 +115,6 @@ fn convert_ranges(
                         start: map_end + 1,
                         end: range.end,
                     });
-                    println!("Remanent range {}-{}", &map_end + 1, &range.end);
                 }
                 break;
             }
@@ -130,7 +122,6 @@ fn convert_ranges(
 
         // No mappings for this range... it is converted as is.
         if !mapped {
-            println!("No mapping for range {}-{}", &range.start, &range.end);
             converted.push(range);
         }
     }
