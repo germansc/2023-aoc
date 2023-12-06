@@ -89,7 +89,7 @@ fn convert_ranges(
 
         for map in &conv.mappings {
             let map_start = map.src_start;
-            let map_end = map_start + map.range;
+            let map_end = map_start + map.range - 1;
             let map_offset = map.dst_start.wrapping_sub(map.src_start) as i64;
 
             if map_end >= range.start && map_start <= range.end {
@@ -219,7 +219,7 @@ fn main() {
     let mut inital_ranges: Vec<Range> = vec![];
     for i in 0..seeds.len() / 2 {
         let start: u64 = seeds[2 * i];
-        let end: u64 = start + seeds[2 * i + 1];
+        let end: u64 = start + seeds[2 * i + 1] - 1;
 
         inital_ranges.push(Range { start, end });
     }
