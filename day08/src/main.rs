@@ -46,26 +46,46 @@ fn main() {
     }
 
     // Initial position.
-    let mut current = "AAA";
+    let part1 = get_steps("AAA", "ZZZ", &pattern, &node_map);
+
+    // Part 1:
+    println!("PART 1: {part1}");
+
+    // ------------------------------------------------------------- PART 2 ---
     let mut steps = 0;
 
-    while current != "ZZZ" {
+
+fn get_steps(from: &str, to: &str, pattern: &str, map: &HashMap<String, Node>) -> u64 {
+    // Initial position.
+    let mut current = from;
+    let mut steps: u64 = 0;
+
+    while current != to {
         // Get the current node:
-        let node = node_map.get(current).unwrap();
+        let node = map.get(current).unwrap();
 
         // Travel in the direction specified by the pattern. I can reuse step as an index counter.
-        current = match pattern.chars().nth(steps % pattern.len()).unwrap() {
+        current = match pattern.chars().nth(steps as usize % pattern.len()).unwrap() {
             'L' => &node.left,
             'R' => &node.right,
             _ => {
                 println!("Unknown direction... ");
-                return;
+                return 0;
             }
         };
 
         steps += 1;
     }
 
-    // Part 1:
-    println!("PART 1: {steps}");
+    return steps;
+}
+
+fn all_end_with_z(keys: &Vec<&str>) -> bool {
+    for key in keys {
+        if key.chars().nth(key.len() - 1).unwrap() != 'Z' {
+            return false;
+        }
+    }
+
+    return true;
 }
