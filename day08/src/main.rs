@@ -69,9 +69,6 @@ fn main() {
         }
     }
 
-    dbg!(&starts);
-    dbg!(&ends);
-
     let mut steps = vec![];
 
     // Get the steps from each starting point, to each ending point.
@@ -81,9 +78,7 @@ fn main() {
         }
     }
 
-    dbg!(&steps);
     steps.retain(|&c| c > 0);
-    dbg!(&steps);
 
     // Get the lower-common-multiplier.
     let mut part2: u64 = 1;
@@ -122,7 +117,7 @@ fn get_steps(from: &str, to: &str, pattern: &str, map: &HashMap<String, Node>) -
         steps += 1;
 
         // Arbitrary number to decide that this path is unreachable.
-        if steps > 30000 {
+        if steps > 25000 {
             return -1;
         }
     }
