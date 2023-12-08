@@ -52,17 +52,62 @@ fn main() {
     println!("PART 1: {part1}");
 
     // ------------------------------------------------------------- PART 2 ---
-    let mut steps = 0;
 
+    // My starting position are all nodes that end with 'A'.
+    let mut starts: Vec<&str> = vec![];
+    for key in node_map.keys() {
+        if key.chars().nth(key.len() - 1).unwrap() == 'A' {
+            starts.push(key);
+        }
+    }
 
-fn get_steps(from: &str, to: &str, pattern: &str, map: &HashMap<String, Node>) -> u64 {
+    // My ending position are all nodes that end with 'Z'.
+    let mut ends: Vec<&str> = vec![];
+    for key in node_map.keys() {
+        if key.chars().nth(key.len() - 1).unwrap() == 'Z' {
+            ends.push(key);
+        }
+    }
+
+    dbg!(&starts);
+    dbg!(&ends);
+
+    let mut steps = vec![];
+
+    // Get the steps from each starting point, to each ending point.
+    for start in &starts {
+        for end in &ends {
+            steps.push(get_steps(*start, *end, &pattern, &node_map))
+        }
+    }
+
+    dbg!(&steps);
+    steps.retain(|&c| c > 0);
+    dbg!(&steps);
+
+    // Get the lower-common-multiplier.
+    let mut part2: u64 = 1;
+    for i in steps {
+        part2 = lcm(part2, i as u64);
+    }
+
+    println!("PART 2: {part2}");
+}
+
+fn get_steps(from: &str, to: &str, pattern: &str, map: &HashMap<String, Node>) -> i64 {
     // Initial position.
     let mut current = from;
-    let mut steps: u64 = 0;
+    let mut steps: i64 = 0;
 
     while current != to {
         // Get the current node:
-        let node = map.get(current).unwrap();
+        let node = match map.get(current) {
+            Some(node) => node,
+            None => {
+                println!("Could not find starting position.");
+                return -1;
+            }
+        };
 
         // Travel in the direction specified by the pattern. I can reuse step as an index counter.
         current = match pattern.chars().nth(steps as usize % pattern.len()).unwrap() {
@@ -70,22 +115,42 @@ fn get_steps(from: &str, to: &str, pattern: &str, map: &HashMap<String, Node>) -
             'R' => &node.right,
             _ => {
                 println!("Unknown direction... ");
-                return 0;
+                return -1;
             }
         };
 
         steps += 1;
+
+        // Arbitrary number to decide that this path is unreachable.
+        if steps > 30000 {
+            return -1;
+        }
     }
 
     return steps;
 }
 
-fn all_end_with_z(keys: &Vec<&str>) -> bool {
-    for key in keys {
-        if key.chars().nth(key.len() - 1).unwrap() != 'Z' {
-            return false;
-        }
+fn lcm(x: u64, y: u64) -> u64 {
+    // Get the GCD
+    let mut rem;
+    let mut temp;
+    let mut gcd;
+
+    if x > y {
+        rem = x;
+        gcd = y;
+    } else {
+        rem = y;
+        gcd = x;
     }
 
-    return true;
+    // Get the GCD first
+    rem = rem % gcd;
+    while rem != 0 {
+        temp = gcd;
+        gcd = rem;
+        rem = temp % gcd;
+    }
+
+    return x * y / gcd;
 }
