@@ -34,6 +34,15 @@ fn main() {
     }
 
     println!("PART 1: {part1}");
+
+    // Part 1 ---------------------------------------------------------------
+    let mut part2: i64 = 0;
+
+    for vector in &readings {
+        part2 += extrapolate_readings(vector);
+    }
+
+    println!("PART 2: {part2}");
 }
 
 fn interpolate_readings(values: &[i64]) -> i64 {
@@ -53,4 +62,23 @@ fn interpolate_readings(values: &[i64]) -> i64 {
     }
 
     return values[values.len() - 1] + delta;
+}
+
+fn extrapolate_readings(values: &[i64]) -> i64 {
+    let mut diff: Vec<i64> = vec![];
+
+    for i in 1..values.len() {
+        diff.push(values[i] - values[i - 1]);
+    }
+
+    // If all diffs are equal, I can directly interpolate this vector.
+    let delta: i64;
+    if diff.iter().filter(|&i| *i == diff[0]).count() == diff.len() {
+        delta = diff[0];
+    } else {
+        // Interpolate the diff vector!
+        delta = extrapolate_readings(&diff);
+    }
+
+    return values[0] - delta;
 }

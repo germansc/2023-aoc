@@ -1,4 +1,4 @@
---- Day 9: Mirage Maintenance ---
+# --- Day 9: Mirage Maintenance ---
 
 You ride the camel through the sandstorm and stop where the ghost's maps told
 you to stop. The sandstorm subsequently subsides, somehow seeing you standing
@@ -23,9 +23,11 @@ surroundings. The OASIS produces a report of many values and how they are
 changing over time (your puzzle input). Each line in the report contains the
 history of a single value. For example:
 
+```
 0 3 6 9 12 15
 1 3 6 10 15 21
 10 13 16 21 30 45
+```
 
 To best protect the oasis, your environmental report should include a
 prediction of the next value in each history. To do this, start by making a new
@@ -42,7 +44,6 @@ these values aren't all zero, repeat the process: the values differ by 0 at
 each step, so the next sequence is 0 0 0 0. This means you have enough
 information to extrapolate the history! Visually, these sequences can be
 arranged like this:
-
 
 ```
 0   3   6   9  12  15
@@ -121,4 +122,36 @@ together, you get 114.
 
 Analyze your OASIS report and extrapolate the next value for each history. What
 is the sum of these extrapolated values?
+
+## --- Part Two ---
+
+Of course, it would be nice to have even more history included in your report.
+Surely it's safe to just extrapolate backwards as well, right?
+
+For each history, repeat the process of finding differences until the sequence
+of differences is entirely zero. Then, rather than adding a zero to the end and
+filling in the next values of each previous sequence, you should instead add a
+zero to the beginning of your sequence of zeroes, then fill in new first values
+for each previous sequence.
+
+In particular, here is what the third example history looks like when
+extrapolating back in time:
+
+```
+5  10  13  16  21  30  45
+  5   3   3   5   9  15
+   -2   0   2   4   6
+      2   2   2   2
+        0   0   0
+```
+
+Adding the new values on the left side of each sequence from bottom to top
+eventually reveals the new left-most history value: 5.
+
+Doing this for the remaining example data above results in previous values of
+-3 for the first history and 0 for the second history. Adding all three new
+values together produces 2.
+
+Analyze your OASIS report again, this time extrapolating the previous value for
+each history. What is the sum of these extrapolated values?
 
