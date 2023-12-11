@@ -1,6 +1,6 @@
 use std::io::{self, Read};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 enum Direction {
     North,
     South,
@@ -8,11 +8,20 @@ enum Direction {
     West,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum CellType {
+    Wall,
+    Inside,
+    Outside,
+    Unknown,
+}
+
 #[derive(Debug)]
 struct Map {
     width: u64,
     height: u64,
     chars: Vec<char>,
+    cells: Vec<CellType>,
 }
 
 fn point_to_index(x: i64, y: i64, map: &Map) -> Option<usize> {
@@ -55,24 +64,26 @@ fn main() {
         }
     }
 
-    let map = Map {
+    let cells: Vec<CellType> = vec![CellType::Unknown; chars.len()];
+    let mut map = Map {
         width,
         height,
         chars,
+        cells,
     };
 
     dbg!(map.height, map.width);
 
     // Part 1 ----------------------------------------------------------------
     // Find the S in the buffer.
-    let start = index_to_point(
-        map.chars
-            .iter()
-            .position(|i| *i == 'S')
-            .expect("Cant find S"),
-        &map,
-    )
-    .unwrap();
+    let start = map
+        .chars
+        .iter()
+        .position(|i| *i == 'S')
+        .expect("Cant find S");
+
+    map.cells[start] = CellType::Wall;
+    let start = index_to_point(start, &map).unwrap();
 
     // Nodes are made of the next cell index, and the direction we arrive from
     let mut nodes: Vec<(usize, Direction)> = vec![];
@@ -112,6 +123,7 @@ fn main() {
             let (idx, dir) = nodes.pop().unwrap();
             let (x, y) = index_to_point(idx, &map).unwrap();
             let new_idx: usize;
+            map.cells[idx] = CellType::Wall;
             match dir {
                 Direction::North => match map.chars[idx] {
                     'L' => {
@@ -126,7 +138,9 @@ fn main() {
                         new_idx = point_to_index(x, y + 1, &map).unwrap();
                         next_nodes.push((new_idx, Direction::North));
                     }
-                    _ => { /*Invalid path, ends here.*/ }
+                    _ => {
+                        map.cells[idx] = CellType::Unknown; /* Invalid path, ends here.*/
+                    }
                 },
                 Direction::South => match map.chars[idx] {
                     'F' => {
@@ -141,7 +155,9 @@ fn main() {
                         new_idx = point_to_index(x, y - 1, &map).unwrap();
                         next_nodes.push((new_idx, Direction::South));
                     }
-                    _ => { /*Invalid path, ends here.*/ }
+                    _ => {
+                        map.cells[idx] = CellType::Unknown; /* Invalid path, ends here.*/
+                    }
                 },
                 Direction::East => match map.chars[idx] {
                     'F' => {
@@ -156,7 +172,9 @@ fn main() {
                         new_idx = point_to_index(x - 1, y, &map).unwrap();
                         next_nodes.push((new_idx, Direction::East));
                     }
-                    _ => { /*Invalid path, ends here.*/ }
+                    _ => {
+                        map.cells[idx] = CellType::Unknown; /* Invalid path, ends here.*/
+                    }
                 },
                 Direction::West => match map.chars[idx] {
                     '7' => {
@@ -171,7 +189,9 @@ fn main() {
                         new_idx = point_to_index(x + 1, y, &map).unwrap();
                         next_nodes.push((new_idx, Direction::West));
                     }
-                    _ => { /*Invalid path, ends here.*/ }
+                    _ => {
+                        map.cells[idx] = CellType::Unknown; /* Invalid path, ends here.*/
+                    }
                 },
             }
         }
@@ -182,8 +202,8 @@ fn main() {
         let indexes: Vec<usize> = next_nodes.iter().map(|s| s.0).collect();
         for (i, index) in indexes.iter().enumerate() {
             if indexes[i + 1..indexes.len()].contains(index) {
-                dbg!(index_to_point(*index, &map).unwrap());
                 converged_paths = true;
+                map.cells[*index] = CellType::Wall;
                 break;
             }
         }
@@ -192,4 +212,81 @@ fn main() {
     }
 
     println!("PART1: {steps}");
+
+    // Part 2 ----------------------------------------------------------------
+    // At this point, walls should be marked in Cells. I can determine if a cell is inside or
+    // outisde of the loop by how many walls are crossed. Since we know the loop is closed, 0,0 is
+    // either a Wall or Outisde.
+
+    let mut part2 = 0;
+    let mut current_state = CellType::Outside;
+    let mut flow = Direction::North;
+
+    for i in 0..map.cells.len() {
+        // For each cell that is not wall, determine if it is outside or inside.
+        // When starting a new row, check if starting position is wall.
+        if i & map.width as usize == 0 && map.cells[0] == CellType::Wall {
+            current_state = CellType::Inside;
+            if "JL".contains(map.chars[i]) {
+                flow = Direction::North;
+            } else if "F7".contains(map.chars[i]) {
+                flow = Direction::South;
+            }
+        }
+
+        // Check for domain change.
+        match map.cells[i] {
+            CellType::Wall => {
+                if map.chars[i] == '|'
+                    || flow == Direction::North && "JL".contains(map.chars[i])
+                    || flow == Direction::South && "7F".contains(map.chars[i])
+                {
+                    current_state = if current_state == CellType::Outside {
+                        CellType::Inside
+                    } else {
+                        CellType::Outside
+                    };
+
+                    if "JL".contains(map.chars[i]) {
+                        flow = Direction::North;
+                    } else if "F7".contains(map.chars[i]) {
+                        flow = Direction::South;
+                    }
+                }
+            }
+            CellType::Unknown => {
+                map.cells[i] = current_state;
+                if current_state == CellType::Inside {
+                    part2 += 1;
+                }
+            }
+            _ => {}
+        }
+
+        if map.cells[0] == CellType::Wall {
+            current_state = CellType::Inside;
+        }
+    }
+
+    println!("PART2: {part2}");
+}
+
+fn _print_map(map: &Map) {
+    for i in 0..map.cells.len() {
+        if i != 0 && i % map.width as usize == 0 {
+            println!();
+        }
+
+        print!(
+            "{}",
+            match map.cells[i] {
+                CellType::Wall => 'W',
+                CellType::Inside => 'I',
+                CellType::Outside => 'O',
+                CellType::Unknown => '?',
+            }
+        );
+    }
+
+    println!();
 }
