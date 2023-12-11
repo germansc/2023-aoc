@@ -152,5 +152,17 @@ fn main() {
     let part1: u64 = distances.iter().sum();
     println!("PART 1: {part1}");
 
-    dbg!(map.distance(galaxies[8], galaxies[7], 1));
+    // Part 2 ----------------------------------------------------------------
+    // Calculate each pair distance with an increased expansion!.
+    let mut distances: Vec<u64> = vec![];
+    let mut temp = galaxies.clone();
+    while temp.len() != 0 {
+        let p1 = temp.pop().unwrap();
+        for p2 in &temp {
+            distances.push(map.distance(p1, *p2, 1000000 - 1));
+        }
+    }
+
+    let part2: u64 = distances.iter().sum();
+    println!("PART 2: {part2}");
 }
