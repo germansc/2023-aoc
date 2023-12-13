@@ -93,7 +93,7 @@ fn main() {
 
     let mut part1 = 0;
 
-    for item in input {
+    for item in &input {
         let temp = block_arrangements(&item.0, &item.1);
         println!(
             "{} [{}] -> {} arrangements.",
@@ -106,4 +106,27 @@ fn main() {
     }
 
     println!("PART 1: {part1}");
+
+    // PART 2 ----------------------------------------------------------------
+    let mut part2 = 0;
+
+    for item in &input {
+        let exp_line = vec![item.0.to_owned(); 5];
+        let exp_line = exp_line.join("?");
+
+        let exp_groups = vec![item.1.to_owned(); 5];
+        let exp_groups: Vec<u64> = exp_groups.into_iter().flatten().collect();
+
+        let temp = block_arrangements(&exp_line, &exp_groups);
+        println!(
+            "{} [{}] -> {} arrangements.",
+            exp_line,
+            group_to_string(&exp_groups),
+            temp,
+        );
+
+        part2 += temp;
+    }
+
+    println!("PART 2: {part2}");
 }
