@@ -1,74 +1,70 @@
 use std::io::stdin;
 
-fn valid_arrangement(line: &str, groups: &Vec<u64>) -> bool {
+fn block_arrangements(slice: &str, groups: &Vec<u64>) -> u64 {
+    // Early return.
+    // If the slice is empty, the arrengement is valid if there are no more expected groups.
+    if slice.is_empty() {
+        if groups.is_empty() {
+            return 1;
+        } else {
+            return 0;
+        }
+    }
+
+    // Early return.
+    // If no more groups are expected, the line cannot contain '#'.
+    if groups.is_empty() {
+        if slice.contains('#') {
+            return 0;
+        } else {
+            return 1;
+        }
+    }
+
+    let mut trimmed_slice = slice.to_string();
+    // Slice any heading '.', they can be ignore to determine the iterations of a block.
+    match slice.chars().position(|c| c != '.') {
+        Some(idx) => {
+            trimmed_slice = slice[idx..].to_string();
+        }
+        _ => {}
+    }
+
     let mut count = 0;
-    let mut group_idx = 0;
 
-    for c in line.chars() {
-        match c {
-            '.' => {
-                if count > 0 {
-                    /* Compare current count with the groups, might return early */
-                    if count != groups[group_idx] {
-                        return false;
-                    } else {
-                        count = 0;
-                        group_idx += 1;
-                    }
-                }
-            }
-            '#' => {
-                count += 1;
-                // If there are no more groups to compare, we know this is invalid.
-                if group_idx == groups.len() {
-                    return false;
-                }
-            }
-            _ => {
-                println!("Unknown char!");
-                return false;
-            }
-        }
+    // At this point, trimmed_slice begins with either a # or a ?. In the latter case, append the
+    // subresult in case it was a '.'
+    if trimmed_slice.chars().nth(0).unwrap() == '?' {
+        count += block_arrangements(&trimmed_slice[1..], groups);
     }
 
-    if group_idx < groups.len() - 1 {
-        return false;
+    // We still have some condition where block requirements cannot be fulfilled.
+    if groups[0] as usize > trimmed_slice.len()
+        || trimmed_slice[0..groups[0] as usize].contains('.')
+        || (trimmed_slice.len() > groups[0] as usize
+            && trimmed_slice.chars().nth(groups[0] as usize).unwrap() == '#')
+    {
+        return count;
     }
 
-    // A last comparison might be needed.
-    if group_idx == groups.len() - 1 {
-        if count != groups[group_idx] {
-            return false;
-        } else {
-            return true;
-        }
+    // Recursively analyze next block arrangement.
+    let subgroup: Vec<u64>;
+    if groups.len() > 1 {
+        subgroup = groups[1..].iter().map(|&u| u).collect();
+    } else {
+        subgroup = vec![];
     }
 
-    // Else, all groups matched the counts.
-    return true;
-}
-
-fn line_arrangements(line: &str, groups: &Vec<u64>, up_to: usize) -> u64 {
-    if up_to == line.len() {
-        return if valid_arrangement(line, groups) {
-            1
-        } else {
-            0
-        };
+    let skip = 1 + groups[0] as usize;
+    if skip > trimmed_slice.len() {
+        trimmed_slice = "".to_string();
+    } else {
+        trimmed_slice = trimmed_slice[skip..].to_string();
     }
 
-    // Recursive calls to generate all posible cases.
-    return match line.chars().nth(up_to).unwrap() {
-        '?' => {
-            // Generate the two posible strings from this point, and return the sum.
-            let string1 = format!("{}{}{}", &line[0..up_to], &".", &line[up_to + 1..]);
-            let string2 = format!("{}{}{}", &line[0..up_to], &"#", &line[up_to + 1..]);
+    count += block_arrangements(&trimmed_slice, &subgroup);
 
-            line_arrangements(&string1, groups, up_to + 1)
-                + line_arrangements(&string2, groups, up_to + 1)
-        }
-        _ => line_arrangements(line, groups, up_to + 1),
-    };
+    return count;
 }
 
 fn group_to_string(groups: &Vec<u64>) -> String {
@@ -98,12 +94,14 @@ fn main() {
     let mut part1 = 0;
 
     for item in input {
-        let temp = line_arrangements(&item.0, &item.1, 0);
-        // println!(
-        //     "{} {} -> {temp} arrangements",
-        //     &item.0,
-        //     group_to_string(&item.1)
-        // );
+        let temp = block_arrangements(&item.0, &item.1);
+        println!(
+            "{} [{}] -> {} arrangements.",
+            item.0,
+            group_to_string(&item.1),
+            temp,
+        );
+
         part1 += temp;
     }
 
