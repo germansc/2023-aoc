@@ -109,12 +109,12 @@ fn main() {
 
     for item in &input {
         let temp = block_arrangements(&item.0, &item.1, &mut precomputed);
-        println!(
-            "{} [{}] -> {} arrangements.",
-            item.0,
-            group_to_string(&item.1),
-            temp,
-        );
+        // println!(
+        //     "{} [{}] -> {} arrangements.",
+        //     item.0,
+        //     group_to_string(&item.1),
+        //     temp,
+        // );
 
         part1 += temp;
     }
@@ -132,12 +132,12 @@ fn main() {
         let exp_groups: Vec<u64> = exp_groups.into_iter().flatten().collect();
 
         let temp = block_arrangements(&exp_line, &exp_groups, &mut precomputed);
-        println!(
-            "{} [{}] -> {} arrangements.",
-            exp_line,
-            group_to_string(&exp_groups),
-            temp,
-        );
+        // println!(
+        //     "{} [{}] -> {} arrangements.",
+        //     exp_line,
+        //     group_to_string(&exp_groups),
+        //     temp,
+        // );
 
         part2 += temp;
     }
