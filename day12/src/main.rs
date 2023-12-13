@@ -1,6 +1,6 @@
-use std::io::stdin;
+use std::{collections::HashMap, io::stdin};
 
-fn block_arrangements(slice: &str, groups: &Vec<u64>) -> u64 {
+fn block_arrangements(slice: &str, groups: &Vec<u64>, cache: &mut HashMap<String, u64>) -> u64 {
     // Early return.
     // If the slice is empty, the arrengement is valid if there are no more expected groups.
     if slice.is_empty() {
@@ -30,12 +30,19 @@ fn block_arrangements(slice: &str, groups: &Vec<u64>) -> u64 {
         _ => {}
     }
 
+    // Check if this combination of slice and groups was already calculated:
+    let key = vec![slice.to_string(), group_to_string(&groups)].join("-");
+    match cache.get(&key) {
+        Some(num) => return *num,
+        None => {}
+    }
+
     let mut count = 0;
 
     // At this point, trimmed_slice begins with either a # or a ?. In the latter case, append the
     // subresult in case it was a '.'
     if trimmed_slice.chars().nth(0).unwrap() == '?' {
-        count += block_arrangements(&trimmed_slice[1..], groups);
+        count += block_arrangements(&trimmed_slice[1..], groups, cache);
     }
 
     // We still have some condition where block requirements cannot be fulfilled.
@@ -62,13 +69,19 @@ fn block_arrangements(slice: &str, groups: &Vec<u64>) -> u64 {
         trimmed_slice = trimmed_slice[skip..].to_string();
     }
 
-    count += block_arrangements(&trimmed_slice, &subgroup);
+    count += block_arrangements(&trimmed_slice, &subgroup, cache);
+
+    // Store the result for this combination of slice and groups in a cache.
+    cache.insert(key, count);
 
     return count;
 }
 
 fn group_to_string(groups: &Vec<u64>) -> String {
-    return groups.iter().map(|n| n.to_string()).collect::<String>();
+    return groups
+        .iter()
+        .map(|n| format!(" {}", n.to_string()))
+        .collect();
 }
 
 fn main() {
@@ -91,10 +104,11 @@ fn main() {
         buff.clear();
     }
 
+    let mut precomputed: HashMap<String, u64> = HashMap::new();
     let mut part1 = 0;
 
     for item in &input {
-        let temp = block_arrangements(&item.0, &item.1);
+        let temp = block_arrangements(&item.0, &item.1, &mut precomputed);
         println!(
             "{} [{}] -> {} arrangements.",
             item.0,
@@ -117,7 +131,7 @@ fn main() {
         let exp_groups = vec![item.1.to_owned(); 5];
         let exp_groups: Vec<u64> = exp_groups.into_iter().flatten().collect();
 
-        let temp = block_arrangements(&exp_line, &exp_groups);
+        let temp = block_arrangements(&exp_line, &exp_groups, &mut precomputed);
         println!(
             "{} [{}] -> {} arrangements.",
             exp_line,
