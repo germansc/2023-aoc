@@ -61,7 +61,7 @@ impl Map {
         return None;
     }
 
-    fn print(&self) {
+    fn _print(&self) {
         println!("Map {}x{}", self.width, self.height);
         for i in 0..self.chars.len() {
             if i != 0 && i % self.width as usize == 0 {
@@ -118,25 +118,73 @@ fn main() {
         visited,
     };
 
-    map.print();
+    // Part 1 ---------------------------------------------------------------
+    //
+
+    // map._print();
+    let part1 = propagate_light(&mut map, (0, Direction::East));
+    // map._print();
+
+    println!("PART 1: {part1}");
 
     // Part 1 ---------------------------------------------------------------
     //
 
+    // Bruteforce?
+    let mut part2 = 0;
+
+    // Starting at North:
+    for i in 0..map.width {
+        // reset visited.
+        map.visited = vec![vec![]; map.chars.len()];
+        let temp = propagate_light(&mut map, (i, Direction::South));
+
+        part2 = std::cmp::max(part2, temp);
+    }
+
+    // Starting at East:
+    for i in 0..map.height {
+        // reset visited.
+        map.visited = vec![vec![]; map.chars.len()];
+        let idx = map.to_index((map.width - 1) as i64, i as i64).unwrap();
+        let temp = propagate_light(&mut map, (idx, Direction::West));
+
+        part2 = std::cmp::max(part2, temp);
+    }
+
+    // Starting at South:
+    for i in 0..map.width {
+        // reset visited.
+        map.visited = vec![vec![]; map.chars.len()];
+        let idx = map.to_index(i as i64, (map.height - 1) as i64).unwrap();
+        let temp = propagate_light(&mut map, (idx, Direction::North));
+
+        part2 = std::cmp::max(part2, temp);
+    }
+
+    // Starting at West:
+    for i in 0..map.height {
+        // reset visited.
+        map.visited = vec![vec![]; map.chars.len()];
+        let idx = map.to_index(0, i as i64).unwrap();
+        let temp = propagate_light(&mut map, (idx, Direction::East));
+
+        part2 = std::cmp::max(part2, temp);
+    }
+
+    println!("PART 2: {part2}")
+}
+
+fn propagate_light(map: &mut Map, start: (usize, Direction)) -> u64 {
     let mut nodes: Vec<(usize, Direction)> = vec![];
 
     // Add the start point, and start propagating.
-    nodes.push((map.to_index(0, 0).unwrap(), Direction::East));
+    nodes.push(start);
 
-    let mut part1 = 0;
     while nodes.len() != 0 {
         let mut next_nodes: Vec<(usize, Direction)> = vec![];
 
         for (idx, dir) in nodes {
-            if map.visited[idx].is_empty() {
-                part1 += 1;
-            }
-
             // Mark as visited, and add new points to the nodes lists.
             map.visited[idx].push(dir);
             match map.chars[idx] {
@@ -253,6 +301,9 @@ fn main() {
         nodes = next_nodes;
     }
 
-    map.print();
-    println!("PART 1: {part1}")
+    return map
+        .visited
+        .iter()
+        .map(|v| if v.len() > 0 { 1 } else { 0 })
+        .sum();
 }
