@@ -133,6 +133,13 @@ fn main() {
 
     let part1 = propagate_carts(&mut map);
     println!("PART 1: {part1}");
+
+    // Part 2 ---------------------------------------------------------------
+    //
+    map.visited = vec![(Direction::None, 0); map.chars.len()];
+
+    let part2 = propagate_carts_part2(&mut map);
+    println!("PART 2: {part2}");
 }
 
 fn propagate_carts(map: &mut Map) -> u64 {
@@ -364,3 +371,236 @@ fn propagate_carts(map: &mut Map) -> u64 {
     return map.visited[i].1;
 }
 
+// Try the same thing, changing the next_nodes section?
+fn propagate_carts_part2(map: &mut Map) -> u64 {
+    // Add the two initial cells to the pusher.
+    use Direction::{East, North, South, West};
+
+    // Each touple consists of (index, Traveling Direction, Previous count in this direction).
+    let start1 = Node {
+        idx: map.to_index(1, 0).unwrap(),
+        direction: East,
+        heatloss: map.chars[map.to_index(1, 0).unwrap()],
+        consecutive_cells: 1,
+    };
+
+    let start2 = Node {
+        idx: map.to_index(0, 1).unwrap(),
+        direction: East,
+        heatloss: map.chars[map.to_index(0, 1).unwrap()],
+        consecutive_cells: 1,
+    };
+
+    // BinaryHeap, seems to be a priority based vector. This makes it so that the system always
+    // extract the least heatloss cells from the neighboring node list.
+    let mut nodes = BinaryHeap::new();
+    nodes.push(start1);
+    nodes.push(start2);
+
+    // Already computed Hashset -> idx, Direction, Consecutive cells in that direction.
+    let mut cache: HashSet<(usize, Direction, u64)> = HashSet::new();
+    let mut count = 0;
+
+    // Get the next node -> priority lesser heatloss.
+    while let Some(node) = nodes.pop() {
+        let mut next_nodes: Vec<Node> = vec![];
+        count += 1;
+
+        let (x, y) = map.to_point(node.idx).unwrap();
+
+        // println!(
+        //     "{count}: Processing cell {},{}: Heat lost {} record for cell",
+        //     x, y, node.heatloss
+        // );
+
+        // Log the current heatloss record and direction.
+        if map.visited[node.idx].1 == 0 || map.visited[node.idx].1 > node.heatloss {
+            // println!("> New record for cell {} -> {}", node.idx, node.heatloss);
+            map.visited[node.idx] = (node.direction, node.heatloss);
+        }
+
+        // If the node corresponds to the exit point, by priority queue this is the least
+        // possible heatloss for this cell. Check also if the ultracrucible can stop here.
+        if node.idx == map.chars.len() - 1 && node.consecutive_cells > 3 {
+            println!("> Reached the last cell");
+            return node.heatloss;
+        }
+
+        // Otherwise, get the neighboring cells and add them to the queue.
+
+        // Add the next posible cells to the node_list.
+        match node.direction {
+            North => {
+                // If allowed to turn, add 90 degree turn cells.
+                if node.consecutive_cells > 3 {
+                    match map.to_index(x - 1, y) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: West,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: 1,
+                        }),
+                        None => {}
+                    }
+
+                    match map.to_index(x + 1, y) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: East,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: 1,
+                        }),
+                        None => {}
+                    }
+                }
+
+                // If can still go straight, add the forward cell.
+                if node.consecutive_cells < 10 {
+                    match map.to_index(x, y - 1) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: North,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: node.consecutive_cells + 1,
+                        }),
+                        None => {}
+                    }
+                }
+            }
+            South => {
+                // If allowed to turn, add 90 degree turn cells.
+                if node.consecutive_cells > 3 {
+                    match map.to_index(x - 1, y) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: West,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: 1,
+                        }),
+                        None => {}
+                    }
+
+                    match map.to_index(x + 1, y) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: East,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: 1,
+                        }),
+                        None => {}
+                    }
+                }
+
+                // If can still go straight, add the forward cell.
+                if node.consecutive_cells < 10 {
+                    match map.to_index(x, y + 1) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: South,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: node.consecutive_cells + 1,
+                        }),
+                        None => {}
+                    }
+                }
+            }
+            East => {
+                // If allowed to turn, add 90 degree turn cells.
+                if node.consecutive_cells > 3 {
+                    match map.to_index(x, y - 1) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: North,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: 1,
+                        }),
+                        None => {}
+                    }
+
+                    match map.to_index(x, y + 1) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: South,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: 1,
+                        }),
+                        None => {}
+                    }
+                }
+
+                // If can still go straight, add the forward cell.
+                if node.consecutive_cells < 10 {
+                    match map.to_index(x + 1, y) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: East,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: node.consecutive_cells + 1,
+                        }),
+                        None => {}
+                    }
+                }
+            }
+            West => {
+                // If allowed to turn, add 90 degree turn cells.
+                if node.consecutive_cells > 3 {
+                    match map.to_index(x, y - 1) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: North,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: 1,
+                        }),
+                        None => {}
+                    }
+
+                    match map.to_index(x, y + 1) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: South,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: 1,
+                        }),
+                        None => {}
+                    }
+                }
+
+                // If can still go straight, add the forward cell.
+                if node.consecutive_cells < 10 {
+                    match map.to_index(x - 1, y) {
+                        Some(val) => next_nodes.push(Node {
+                            idx: val,
+                            direction: West,
+                            heatloss: node.heatloss + map.chars[val],
+                            consecutive_cells: node.consecutive_cells + 1,
+                        }),
+                        None => {}
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        // For each Node generated, insert them to the binary heap. The if block with the cache
+        // avoids inserting cells that were already computed.
+        for next_node in next_nodes {
+            if cache.insert((
+                next_node.idx,
+                next_node.direction,
+                next_node.consecutive_cells,
+            )) {
+                // let (x, y) = map.to_point(next_node.idx).unwrap();
+                // println!(
+                //     "> Adding ({x},{y} | {} | {}) to the nodes lists",
+                //     next_node.heatloss, next_node.consecutive_cells
+                // );
+                nodes.push(next_node);
+            }
+        }
+    }
+
+    // Return the minimum heatloss recorded at bottom right.
+    println!("Could not reach the last cell? |-> Iterations: {count}");
+    let i = map.chars.len() - 1;
+    return map.visited[i].1;
+}
