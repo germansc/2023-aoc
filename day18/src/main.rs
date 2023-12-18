@@ -14,9 +14,11 @@ fn main() {
         .read_to_string(&mut buff)
         .expect("Could not read stdin.");
 
-    let mut last_vertex = Vertex { x: 0, y: 0 };
+    let mut last_vertex_1 = Vertex { x: 0, y: 0 };
+    let mut last_vertex_2 = Vertex { x: 0, y: 0 };
 
-    let mut vertex_list: Vec<Vertex> = vec![last_vertex.clone()];
+    let mut vertex_list_1: Vec<Vertex> = vec![last_vertex_1.clone()];
+    let mut vertex_list_2: Vec<Vertex> = vec![last_vertex_2.clone()];
     for line in buff.split("\n") {
         let line = line.trim();
         if line.is_empty() {
@@ -26,27 +28,52 @@ fn main() {
         let dir = line.split(" ").nth(0).unwrap();
         let length = line.split(" ").nth(1).unwrap().parse::<i64>().unwrap();
 
+        // Part 1 Input
         let (x, y) = match dir {
-            "R" => (last_vertex.x + length, last_vertex.y),
-            "L" => (last_vertex.x - length, last_vertex.y),
-            "U" => (last_vertex.x, last_vertex.y + length),
-            "D" => (last_vertex.x, last_vertex.y - length),
+            "R" => (last_vertex_1.x + length, last_vertex_1.y),
+            "L" => (last_vertex_1.x - length, last_vertex_1.y),
+            "U" => (last_vertex_1.x, last_vertex_1.y + length),
+            "D" => (last_vertex_1.x, last_vertex_1.y - length),
             _ => {
                 println!("Unexpected direction!");
                 return;
             }
         };
 
-        last_vertex = Vertex { x, y };
+        last_vertex_1 = Vertex { x, y };
+        vertex_list_1.push(last_vertex_1.clone());
 
-        vertex_list.push(last_vertex.clone());
+        // Part 2 Input
+        let hex = line.split(" ").nth(2).unwrap();
+        let len = i64::from_str_radix(&hex[2..hex.len() - 2], 16).unwrap();
+        let dir = &hex[hex.len() - 2..hex.len() - 1];
+
+        let (x, y) = match dir {
+            "0" => (last_vertex_2.x + len, last_vertex_2.y),
+            "1" => (last_vertex_2.x, last_vertex_2.y - len),
+            "2" => (last_vertex_2.x - len, last_vertex_2.y),
+            "3" => (last_vertex_2.x, last_vertex_2.y + len),
+            _ => {
+                println!("Unexpected direction!");
+                return;
+            }
+        };
+
+        last_vertex_2 = Vertex { x, y };
+        vertex_list_2.push(last_vertex_2.clone());
     }
 
     // Part 1 ---------------------------------------------------------------
     // Calculate the area of a polygon described by vertices.
-    let part1 = get_area(&vertex_list);
+    let part1 = get_area(&vertex_list_1);
 
     println!("PART 1: {part1}");
+
+    // Part 2 ---------------------------------------------------------------
+    // Same thing with the second group of vertex.
+    let part2 = get_area(&vertex_list_2);
+
+    println!("PART 2: {part2}");
 }
 
 fn get_area(vertex_list: &[Vertex]) -> u64 {
