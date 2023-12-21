@@ -104,7 +104,7 @@ fn process_pulse(
             // Broadcast, sends a low signal to all outputs.
             for m in &module.outputs {
                 next_set.push((m.to_string(), Pulse::Low));
-                println!("broadcaster -{:?}-> {m}", Pulse::Low);
+                // println!("broadcaster -{:?}-> {m}", Pulse::Low);
             }
             module.current_pulse = Pulse::Low;
         }
@@ -122,7 +122,7 @@ fn process_pulse(
 
                     for m in &module.outputs {
                         next_set.push((m.to_string(), module.current_pulse));
-                        println!("{} -{:?}-> {m}", module.name, module.current_pulse);
+                        // println!("{} -{:?}-> {m}", module.name, module.current_pulse);
                     }
                 }
                 _ => {}
@@ -145,7 +145,7 @@ fn process_pulse(
 
             for m in &module.outputs {
                 next_set.push((m.to_string(), module.current_pulse));
-                println!("{} -{:?}-> {m}", module.name, module.current_pulse);
+                // println!("{} -{:?}-> {m}", module.name, module.current_pulse);
             }
         }
     }
@@ -178,9 +178,9 @@ fn process_part1(modules: &HashMap<String, Module>) -> u64 {
 
     loop {
         cycles += 1;
-        println!(">> Cycle {cycles}");
+        // println!(">> Cycle {cycles}");
 
-        println!("button -{:?}-> broadcaster", Pulse::Low);
+        // println!("button -{:?}-> broadcaster", Pulse::Low);
         processing.push(("broadcaster".to_string(), Pulse::Low));
 
         while processing.len() != 0 {
@@ -226,8 +226,78 @@ fn process_part1(modules: &HashMap<String, Module>) -> u64 {
     return low_pulses * high_pulses * ((1000 / cycles) as u64).pow(2);
 }
 
-fn process_part2() -> u64 {
-    return 0;
+fn process_part2(modules: &HashMap<String, Module>) -> u64 {
+    // No idea what to do for a general solution...
+    // Looking at input, rx is connected to a kh conjuction. To send a Low pulse, all of kh inputs
+    // should be high at the same time.
+    //
+    // kh has four inputs: pv, qh, xm and hz. All conjuctions. LCM?
+
+    let mut inputs: Vec<String> = modules
+        .iter()
+        .filter(|(_, m)| m.outputs.contains(&"rx".to_string()))
+        .map(|(_, m)| m.name.clone())
+        .collect();
+
+    while inputs.len() == 1 {
+        inputs = modules
+            .iter()
+            .filter(|(_, m)| m.outputs.contains(&inputs[0]))
+            .map(|(_, m)| m.name.clone())
+            .collect();
+    }
+
+    // dbg!(&inputs);
+
+    let mut cycles = 0;
+    let mut input_cycles = vec![0; inputs.len()];
+
+    let mut part2_modules = modules.clone();
+    let mut processing: Vec<(String, Pulse)> = vec![];
+
+    // Find a cycle for each of kh inputs...
+    'cycle_loop: loop {
+        cycles += 1;
+
+        processing.push(("broadcaster".to_string(), Pulse::Low));
+        while processing.len() != 0 {
+            let (name, pulse) = processing.remove(0);
+
+            // Skip processing some named modules that are not defined.
+            if name == "output" || name == "rx" {
+                continue;
+            }
+
+            // Get a mutable handle of the module, and process the signal.
+            let reference = part2_modules.clone();
+            let module = part2_modules
+                .get_mut(name.as_str())
+                .expect(format!("Should work {name}").as_str());
+            processing.append(&mut process_pulse(module, pulse, &reference));
+
+            if inputs.contains(&module.name) && module.current_pulse == Pulse::High {
+                println!(">P2 {name} sends High after {cycles} cycles");
+                let idx = inputs.iter().position(|m| m == &module.name).unwrap();
+                if input_cycles[idx] != 0 {
+                    continue;
+                }
+
+                input_cycles[idx] = cycles;
+                if !input_cycles.contains(&0) {
+                    break 'cycle_loop;
+                }
+            }
+        }
+
+        if cycles == 5000 {
+            println!("Reached 5000 cycles... ");
+            break;
+        }
+    }
+
+    dbg!(&input_cycles);
+
+    return input_cycles.iter().product();
 }
 
 fn main() {
@@ -240,11 +310,11 @@ fn main() {
 
     let part1 = process_part1(&modules);
 
-    println!("PART 1: {part1}");
+    println!("PART 1: {part1}\n");
 
     // Part 2 ---------------------------------------------------------------
 
-    let part2 = process_part2();
+    let part2 = process_part2(&modules);
 
-    println!("PART 2: {part2}");
+    println!("PART 2: {part2}\n");
 }
