@@ -100,16 +100,16 @@ fn process_part1(map: &Map) -> u64 {
         next_nodes.dedup();
 
         steps += 1;
-        println!(
-            "After {steps} steps, the elf can reach {} cells.",
-            next_nodes.len()
-        );
+        // println!(
+        //     "After {steps} steps, the elf can reach {} cells.",
+        //     next_nodes.len()
+        // );
 
         nodes = next_nodes;
     }
 
     // Return the value.
-    return 0;
+    return nodes.len() as u64;
 }
 
 fn process_part2(map: &Map) -> u64 {
